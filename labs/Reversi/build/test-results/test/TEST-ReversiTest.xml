@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="ReversiTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2024-09-06T17:11:37" hostname="sophisticatedlady" time="0.038">
+  <properties/>
+  <testcase name="testMoreMovesForBlack()" classname="ReversiTest" time="0.024"/>
+  <testcase name="testNoMoreMoves()" classname="ReversiTest" time="0.002"/>
+  <testcase name="testNewGameInitialization()" classname="ReversiTest" time="0.008"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,456 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>Reversi.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Reversi</a> &gt; <a href="index.source.html" class="el_package">default</a> &gt; <span class="el_source">Reversi.java</span></div><h1>Reversi.java</h1><pre class="source lang-java linenums">
+
+import java.util.Scanner;
+
+//**********************************************************************
+//**
+//**						  APCS Reversi
+//**			The classic game of reversal of fortunes
+//**
+//**		Written by Mr. Indelicato as an APCS Final Project
+//**	Copyright (c) Tom Indelicato / Bishop Guertin High School
+//**
+//**********************************************************************
+//** REVISION HISTORY
+//**	20150427	Initial work begins: board storage, printing, prompt
+//**				for human / computer players; framework added for
+//**				computer and human move selection.
+//**	20150428	Added logic for accepting human moves: input parsing,
+//**				validity checks, piece flipping. At this point the
+//**				program serves as a human v. human game
+//**	20150429	Logic added to prevent end-of-game lock-up, added
+//**				Winner check &amp; announce code.
+//**	20150508	Minor code clean-up
+//**********************************************************************
+//** TO DO LIST
+//**	- Add AI for Computer (see bottom of code)
+//**********************************************************************
+//** BUG LIST
+//**	- Can put piece on top of another piece				KILLED 0429
+//**********************************************************************
+
+<span class="nc" id="L32">public class Reversi</span>
+{
+	static Scanner input;
+	
+	static final int EMPTY = 0;
+	static final int BLACK = 1;
+	static final int WHITE = 2;
+	static final int HUMAN = 1;
+	static final int COMPUTER = 2;
+	
+<span class="fc" id="L42">	static int[][] board = new int[8][8];</span>
+	static int whitePlayer, blackPlayer;
+<span class="fc" id="L44">	static boolean gameOver = false;</span>
+<span class="fc" id="L45">	static int firstMove = BLACK;</span>
+	static int nextMove;
+
+	
+	public static void main(String[] args)
+	//**********************************************************************
+	//** main
+	//**	Displays welcome banner, allows user to select human or computer 
+	//**	for White and Black, resets and prints board. Play alternates 
+	//**	between Black and White A) as long as there are more moves to
+	//**	make, and B) until a winner is found.
+	//**********************************************************************
+	{
+<span class="nc" id="L58">		boolean onePlayerCantMove = false;		// indicates both players blocked </span>
+
+<span class="nc" id="L60">		input = new Scanner(System.in);</span>
+
+<span class="nc" id="L62">		System.out.println(&quot;\t\t#O#O#O  APCS Reversi  O#O#O# \n&quot;);</span>
+<span class="nc" id="L63">		System.out.println(&quot;\t\t   Author: Mr. Indelicato\n\n&quot;); // &lt;-- Insert Your Name Here!</span>
+
+<span class="nc" id="L65">		choosePlayers();</span>
+
+<span class="nc" id="L67">		newGame();</span>
+<span class="nc" id="L68">		printBoard();</span>
+
+<span class="nc bnc" id="L70" title="All 2 branches missed.">		while (!gameOver)</span>
+		{
+<span class="nc bnc" id="L72" title="All 2 branches missed.">			if (nextMove == BLACK)</span>
+			{
+<span class="nc bnc" id="L74" title="All 2 branches missed.">				if (!moreMoves(BLACK))</span>
+				{
+<span class="nc" id="L76">					System.out.println(&quot;No move for Black, White moves next&quot;);</span>
+<span class="nc bnc" id="L77" title="All 2 branches missed.">					if (onePlayerCantMove) gameOver = true;</span>
+<span class="nc" id="L78">					onePlayerCantMove = true;</span>
+				}
+				else
+				{
+<span class="nc" id="L82">					onePlayerCantMove = false;</span>
+<span class="nc bnc" id="L83" title="All 2 branches missed.">					if (blackPlayer == HUMAN)</span>
+<span class="nc" id="L84">						promptHuman(BLACK);</span>
+					else
+<span class="nc" id="L86">						machineStrategy(BLACK);</span>
+
+<span class="nc" id="L88">					printBoard();</span>
+				}
+			}
+			else
+			{
+<span class="nc bnc" id="L93" title="All 2 branches missed.">				if (!moreMoves(WHITE))</span>
+				{
+<span class="nc" id="L95">					System.out.println(&quot;No move for White, Black moves next&quot;);</span>
+<span class="nc bnc" id="L96" title="All 2 branches missed.">					if (onePlayerCantMove) gameOver = true;</span>
+<span class="nc" id="L97">					onePlayerCantMove = true;</span>
+				}
+				else
+				{
+<span class="nc" id="L101">					onePlayerCantMove = false;</span>
+<span class="nc bnc" id="L102" title="All 2 branches missed.">					if (whitePlayer == HUMAN)</span>
+<span class="nc" id="L103">						promptHuman(WHITE);</span>
+					else
+<span class="nc" id="L105">						machineStrategy(WHITE);</span>
+
+<span class="nc" id="L107">					printBoard();</span>
+				}
+			}
+			
+<span class="nc" id="L111">			nextMove = BLACK + WHITE - nextMove;	// toggle next player</span>
+		}
+		
+		// Game over: Report winner
+<span class="nc" id="L115">		System.out.println(&quot;*** Game Over ***&quot;);</span>
+<span class="nc" id="L116">		int blackTotal = pieceCount(BLACK);</span>
+<span class="nc" id="L117">		int whiteTotal = pieceCount(WHITE);</span>
+		
+<span class="nc bnc" id="L119" title="All 2 branches missed.">		if (blackTotal == whiteTotal)</span>
+<span class="nc" id="L120">			System.out.println(&quot;Tie Game, &quot; + blackTotal + &quot;-&quot; + whiteTotal);</span>
+<span class="nc bnc" id="L121" title="All 2 branches missed.">		if (blackTotal &gt; whiteTotal)</span>
+<span class="nc" id="L122">			System.out.println(&quot;Black wins, &quot; + blackTotal + &quot;-&quot; + whiteTotal);</span>
+<span class="nc bnc" id="L123" title="All 2 branches missed.">		if (blackTotal &lt; whiteTotal)</span>
+<span class="nc" id="L124">			System.out.println(&quot;White wins, &quot; + whiteTotal + &quot;-&quot; + blackTotal);</span>
+ 
+<span class="nc" id="L126">	}</span>
+	
+	public static void choosePlayers()
+	//**********************************************************************
+	//** choosePlayers
+	//**	Called at the start of the game, this code prompts the user to 
+	//**	indicate which player (Black or White) will be human and which
+	//**	(white or Black) will be computer.
+	//**
+	//** NOTE: It is perfectly legal to have both players human, or both
+	//**	players computer.
+	//**********************************************************************
+	{
+<span class="nc" id="L139">		String inputData = &quot;&quot;;</span>
+<span class="nc bnc" id="L140" title="All 4 branches missed.">		while (!inputData.toUpperCase().equals(&quot;H&quot;) &amp;&amp; !inputData.toUpperCase().equals(&quot;C&quot;))</span>
+		{
+<span class="nc" id="L142">			System.out.print(&quot;Black Player -- Human or Computer (H or C): &quot;);</span>
+<span class="nc" id="L143">			inputData = input.nextLine();</span>
+		}
+<span class="nc bnc" id="L145" title="All 2 branches missed.">		if (inputData.toUpperCase().equals(&quot;H&quot;)) blackPlayer = HUMAN; else blackPlayer = COMPUTER; </span>
+<span class="nc" id="L146">		inputData = &quot;&quot;;</span>
+<span class="nc bnc" id="L147" title="All 4 branches missed.">		while (!inputData.toUpperCase().equals(&quot;H&quot;) &amp;&amp; !inputData.toUpperCase().equals(&quot;C&quot;))</span>
+		{
+<span class="nc" id="L149">			System.out.print(&quot;White Player -- Human or Computer (H or C): &quot;);</span>
+<span class="nc" id="L150">			inputData = input.nextLine();</span>
+		}
+<span class="nc bnc" id="L152" title="All 2 branches missed.">		if (inputData.toUpperCase().equals(&quot;H&quot;)) whitePlayer = HUMAN; else whitePlayer = COMPUTER; </span>
+<span class="nc" id="L153">	}</span>
+	
+	public static void newGame()
+	//**********************************************************************
+	//** newGame
+	//**	Resets the Reversi board: Sets all 64 squares to EMPTY, puts the
+	//**	initial four pieces in the center, flips the color of the first
+	//**	player to move.
+	//**********************************************************************
+	{
+<span class="fc bfc" id="L163" title="All 2 branches covered.">		for (int row = 0; row &lt; 8; row++)</span>
+<span class="fc bfc" id="L164" title="All 2 branches covered.">			for (int col = 0; col &lt; 8; col++)</span>
+<span class="fc" id="L165">				board[row][col] = EMPTY;</span>
+		
+<span class="fc" id="L167">		board[3][3] = WHITE;</span>
+<span class="fc" id="L168">		board[3][4] = BLACK;</span>
+<span class="fc" id="L169">		board[4][3] = BLACK;</span>
+<span class="fc" id="L170">		board[4][4] = WHITE;</span>
+		
+<span class="fc" id="L172">		nextMove = firstMove;</span>
+<span class="fc" id="L173">		firstMove = BLACK + WHITE - firstMove;</span>
+		
+<span class="fc" id="L175">		initializeMachineLogic();	// Used to set up AI code, if needed</span>
+<span class="fc" id="L176">	}</span>
+	
+	public static void printBoard()
+	//**********************************************************************
+	//** printBoard
+	//**	Does a passable job of displaying the Reversi board
+	//**********************************************************************
+	{
+<span class="nc" id="L184">		System.out.print(&quot;\n\t     A   B   C   D   E   F   G   H&quot;);</span>
+<span class="nc bnc" id="L185" title="All 2 branches missed.">		for (int row = 0; row &lt; 8; row++)</span>
+		{
+<span class="nc" id="L187">			System.out.print(&quot;\n\t   +---+---+---+---+---+---+---+---+\n\t &quot; + (row + 1) + &quot; |&quot;);</span>
+
+<span class="nc bnc" id="L189" title="All 2 branches missed.">			for (int col = 0; col &lt; 8; col++)</span>
+			{
+<span class="nc bnc" id="L191" title="All 2 branches missed.">				if (board[row][col] == EMPTY) System.out.print(&quot;   |&quot;);</span>
+<span class="nc bnc" id="L192" title="All 2 branches missed.">				if (board[row][col] == BLACK) System.out.print(&quot; # |&quot;);</span>
+<span class="nc bnc" id="L193" title="All 2 branches missed.">				if (board[row][col] == WHITE) System.out.print(&quot; O |&quot;);</span>
+			}
+		}
+<span class="nc" id="L196">		System.out.print(&quot;\n\t   +---+---+---+---+---+---+---+---+\n&quot;);</span>
+<span class="nc" id="L197">	}</span>
+
+	public static int pieceCount(int thisColor)
+	//**********************************************************************
+	//** pieceCount
+	//**	Used to determine Winner. Counts the number of thisColor pieces
+	//**	found on the board.
+	//**********************************************************************
+	{
+<span class="nc" id="L206">		int count = 0;</span>
+		
+<span class="nc bnc" id="L208" title="All 2 branches missed.">		for (int row = 0; row &lt; 8; row++)</span>
+<span class="nc bnc" id="L209" title="All 2 branches missed.">			for (int col = 0; col &lt; 8; col++)</span>
+<span class="nc bnc" id="L210" title="All 2 branches missed.">				if (board[row][col] == thisColor) count++;</span>
+		
+<span class="nc" id="L212">		return count;</span>
+	}
+	
+	public static boolean moreMoves(int myColor)
+	//**********************************************************************
+	//** moreMoves
+	//**	Checks to see if there is at least one valid move for the next 
+	//**	player. Scans the entire board, checking each empty place to 
+	//**	see if the &quot;myColor&quot; player can move. If so, return true so that
+	//**	s/he can move. If not, return false to say the previous player
+	//**	can go again.
+	//**********************************************************************
+	{
+<span class="fc bfc" id="L225" title="All 2 branches covered.">		for (int row = 0; row &lt; 8; row++)</span>
+<span class="fc bfc" id="L226" title="All 2 branches covered.">			for (int col = 0; col &lt; 8; col++)</span>
+<span class="fc bfc" id="L227" title="All 2 branches covered.">				if (board[row][col] == EMPTY)</span>
+<span class="fc bfc" id="L228" title="All 2 branches covered.">					if (checkMove(col, row, myColor))</span>
+<span class="fc" id="L229">						return true;</span>
+<span class="fc" id="L230">		return false;</span>
+	}
+	
+	public static boolean checkMove(int X, int Y, int myColor)
+	//**********************************************************************
+	//** checkMove
+	//**	Determines if this square (X,Y) has a valid move for the given 
+	//**	color. Using the input parameters, scan the board in each of 
+	//**	the eight potential directions, returning true if a move can be
+	//**	made in any of the directions.
+	//**
+	//** INPUT:
+	//**	X, Y:			board coordinates of the square to be checked
+	//**	myColor:		color of the piece being (potentially) placed
+	//**
+	//** OUTPUT:
+	//**	true  - if a valid move is found
+	//**	false - if no valid move is found
+	//**********************************************************************
+	{
+
+<span class="pc bpc" id="L251" title="1 of 2 branches missed.">		return  checkMoveThisDir(X, Y, -1, -1, myColor) ||</span>
+<span class="pc bpc" id="L252" title="1 of 2 branches missed.">				checkMoveThisDir(X, Y, -1,  0, myColor) ||</span>
+<span class="pc bpc" id="L253" title="1 of 2 branches missed.">				checkMoveThisDir(X, Y, -1,  1, myColor) ||</span>
+<span class="pc bpc" id="L254" title="1 of 2 branches missed.">				checkMoveThisDir(X, Y,  0, -1, myColor) ||</span>
+<span class="fc bfc" id="L255" title="All 2 branches covered.">				checkMoveThisDir(X, Y,  0,  1, myColor) ||</span>
+<span class="pc bpc" id="L256" title="1 of 2 branches missed.">				checkMoveThisDir(X, Y,  1, -1, myColor) ||</span>
+<span class="pc bpc" id="L257" title="1 of 2 branches missed.">				checkMoveThisDir(X, Y,  1,  0, myColor) ||</span>
+<span class="pc bpc" id="L258" title="1 of 2 branches missed.">				checkMoveThisDir(X, Y,  1,  1, myColor);</span>
+	}
+	
+	public static boolean checkMoveThisDir(int X, int Y, int deltaX, int deltaY, int myColor)
+	//**********************************************************************
+	//** checkMoveThisDir
+	//**	Determines if this square (X,Y) has a valid move in the given 
+	//**	direction (deltaX, deltaY) for the given color. Using the input
+	//**	parameters, scan the board quitting if a blank, a myColor piece,
+	//**	or a series of Enemy pieces that don't have a myColor piece 
+	//**	immediately following.
+	//**
+	//** INPUT:
+	//**	X, Y:			board coordinates of the square to be checked
+	//**	deltaX,deltaY:	direction to be checked for valid move
+	//**	myColor:		color of the piece being (potentially) placed
+	//**
+	//** OUTPUT:
+	//**	true  - if a valid move is found
+	//**	false - if no valid move is found
+	//**********************************************************************
+	{
+<span class="pc bpc" id="L280" title="1 of 2 branches missed.">		if (board[Y][X] != EMPTY) return false;</span>
+		
+<span class="fc" id="L282">		int enemyColor = WHITE + BLACK - myColor;</span>
+
+<span class="fc" id="L284">		int currX = X + deltaX;</span>
+<span class="fc" id="L285">		int currY = Y + deltaY;</span>
+<span class="pc bpc" id="L286" title="1 of 8 branches missed.">		if (currX &lt; 0 || currX &gt; 7 || currY &lt; 0 || currY &gt; 7)</span>
+<span class="fc" id="L287">			return false;</span>
+		
+<span class="fc bfc" id="L289" title="All 2 branches covered.">		if (board[currY][currX] != enemyColor) return false;</span>
+
+<span class="fc bfc" id="L291" title="All 2 branches covered.">		while (board[currY][currX] == enemyColor)</span>
+		{
+<span class="fc" id="L293">			currX += deltaX;</span>
+<span class="fc" id="L294">			currY += deltaY;</span>
+<span class="pc bpc" id="L295" title="4 of 8 branches missed.">			if (currX &lt; 0 || currX &gt; 7 || currY &lt; 0 || currY &gt; 7)</span>
+<span class="nc" id="L296">				return false;</span>
+		}
+<span class="fc bfc" id="L298" title="All 2 branches covered.">		if (board[currY][currX] != myColor) </span>
+<span class="fc" id="L299">			return false;</span>
+		
+<span class="fc" id="L301">		return true;		</span>
+	}
+
+	public static void putPiece(int X, int Y, int myColor)
+	//**********************************************************************
+	//** putPiece
+	//**     Now that we know there's a valid move, we have to flip the
+	//**     pieces around. Following the pattern of checkMove, we scan in
+	//**     eight directions (up&amp;left, up, up&amp;right, left, right,
+	//**     down&amp;left, down, and down&amp;right), looking for pieces to flip.
+	//**     We then put the piece down on the square, ending the flipping.
+	//** INPUT:
+	//**     X, Y:           coordinates of space where the piece is placed 
+	//**     myColor:        color of piece being placed
+	//**********************************************************************
+	{
+<span class="nc" id="L317">		flipPiecesThisDir(X, Y, -1, -1, myColor);</span>
+<span class="nc" id="L318">		flipPiecesThisDir(X, Y, -1,  0, myColor);</span>
+<span class="nc" id="L319">		flipPiecesThisDir(X, Y, -1,  1, myColor);</span>
+<span class="nc" id="L320">		flipPiecesThisDir(X, Y,  0, -1, myColor);</span>
+<span class="nc" id="L321">		flipPiecesThisDir(X, Y,  0,  1, myColor);</span>
+<span class="nc" id="L322">		flipPiecesThisDir(X, Y,  1, -1, myColor);</span>
+<span class="nc" id="L323">		flipPiecesThisDir(X, Y,  1,  0, myColor);</span>
+<span class="nc" id="L324">		flipPiecesThisDir(X, Y,  1,  1, myColor);</span>
+<span class="nc" id="L325">		board[Y][X] = myColor;</span>
+<span class="nc" id="L326">	}</span>
+	
+	public static void flipPiecesThisDir(int X, int Y, int deltaX, int deltaY, int myColor)
+	//**********************************************************************
+	//** flipPiecesThisDir
+	//**     Search a given square in a given direction, and flip pieces
+	//**     around if appropriate. Using logic similar to checkMove, if
+	//**     a valid move is found we go the additional step of flipping
+	//**     pieces.
+	//** INPUT:
+	//**     X, Y:           board coordinates of square to be checked
+	//**     deltaX, deltaY: direction to be checked for pieces to flip
+	//**     myColor:        color of piece being (potentially) placed
+	//**********************************************************************
+	{
+		int currX, currY;
+<span class="nc" id="L342">		int enemyColor = WHITE + BLACK - myColor;</span>
+		
+<span class="nc" id="L344">		currX = X + deltaX;</span>
+<span class="nc" id="L345">		currY = Y + deltaY;</span>
+<span class="nc bnc" id="L346" title="All 8 branches missed.">		if (currX == -1 || currX == 8 || currY == -1 || currY == 8) return;</span>
+<span class="nc bnc" id="L347" title="All 2 branches missed.">		if (board[currY][currX] != enemyColor) return;</span>
+
+<span class="nc bnc" id="L349" title="All 2 branches missed.">		while(board[currY][currX] == enemyColor)</span>
+		{
+<span class="nc" id="L351">			currX += deltaX;</span>
+<span class="nc" id="L352">			currY += deltaY;</span>
+<span class="nc bnc" id="L353" title="All 8 branches missed.">			if (currX == -1 || currX == 8 || currY == -1 || currY == 8) return;</span>
+		}
+<span class="nc bnc" id="L355" title="All 2 branches missed.">		if (board[currY][currX] != myColor) return;</span>
+
+		// If we're here, we passed all checks, so start flipping pieces
+		do
+		{
+<span class="nc" id="L360">			board[currY][currX] = myColor;</span>
+<span class="nc" id="L361">			currX -= deltaX;</span>
+<span class="nc" id="L362">			currY -= deltaY;</span>
+<span class="nc bnc" id="L363" title="All 2 branches missed.">		} while (board[currY][currX] == enemyColor);</span>
+<span class="nc" id="L364">	}</span>
+	
+	public static void promptHuman(int playerColor)
+	//**********************************************************************
+	//** promptHuman
+	//**	Asks the human player to indicate where his/her next move will
+	//**	be. Starts by prompting for input; input is then checked to see
+	//**	if it valid (i.e., a letter-number combination). If it's valid,
+	//**	the move is checked to see if it's legal (i.e., the selected
+	//**	space results in tiles flipped), and if so, the piece is placed.
+	//**********************************************************************
+	{
+<span class="nc" id="L376">		String inputData = &quot;&quot;;</span>
+<span class="nc" id="L377">		boolean goodMove = false;</span>
+		boolean validEntry;
+<span class="nc" id="L379">		int col = 0, row = 0;</span>
+		
+<span class="nc bnc" id="L381" title="All 2 branches missed.">		while (!goodMove)</span>
+		{
+<span class="nc" id="L383">			validEntry = false;</span>
+<span class="nc bnc" id="L384" title="All 2 branches missed.">			while (!validEntry)</span>
+			{
+<span class="nc bnc" id="L386" title="All 2 branches missed.">				if (playerColor == BLACK)</span>
+<span class="nc" id="L387">					System.out.print(&quot;Black&quot;);</span>
+				else
+<span class="nc" id="L389">					System.out.print(&quot;White&quot;);</span>
+<span class="nc" id="L390">				System.out.print(&quot; player, enter your move in column-row format (e.g., A5): &quot;);</span>
+<span class="nc" id="L391">				inputData = input.nextLine();</span>
+				
+<span class="nc" id="L393">				col = -1; row = -1;</span>
+<span class="nc bnc" id="L394" title="All 2 branches missed.">				if (inputData.length() &gt;= 2 &amp;&amp; </span>
+<span class="nc bnc" id="L395" title="All 2 branches missed.">					inputData.toUpperCase().charAt(0) &gt;= 'A' &amp;&amp;</span>
+<span class="nc bnc" id="L396" title="All 2 branches missed.">					inputData.toUpperCase().charAt(0) &lt;= 'H' &amp;&amp;</span>
+<span class="nc bnc" id="L397" title="All 4 branches missed.">					inputData.charAt(1) &gt;= '1' &amp;&amp; inputData.charAt(1) &lt;= '8')</span>
+				{
+<span class="nc" id="L399">					col = inputData.toUpperCase().charAt(0) - 'A';</span>
+<span class="nc" id="L400">					row = Integer.parseInt(inputData.substring(1,2)) - 1;</span>
+				}
+				else
+<span class="nc" id="L403">					System.out.println(&quot;Invalid entry, please try again.&quot;);</span>
+				
+<span class="nc bnc" id="L405" title="All 8 branches missed.">				if (col &gt;= 0 &amp;&amp; col &lt; 8 &amp;&amp; row &gt;= 0 &amp;&amp; row &lt; 8) validEntry = true;</span>
+			}
+			
+<span class="nc bnc" id="L408" title="All 2 branches missed.">			if (checkMove(col, row, playerColor))</span>
+<span class="nc" id="L409">				goodMove = true;</span>
+			else
+<span class="nc" id="L411">				System.out.println(&quot;Invalid location, try again.&quot;);</span>
+		}
+		
+<span class="nc" id="L414">		putPiece(col, row, playerColor);</span>
+<span class="nc" id="L415">	}</span>
+
+	
+	//**********************************************************************
+	//** MACHINE LOGIC CODE
+	//**	This is where you will put your code, to make your game as
+	//**	intelligent / competitive as you can.
+	//**********************************************************************
+	
+	public static void initializeMachineLogic()
+	//**********************************************************************
+	//** initializeMachineLogic
+	//**	Called from the newGame() method, this initializes your AI.
+	//**
+	//**					describe your code here
+	//**	
+	//**********************************************************************
+	{
+		
+<span class="fc" id="L434">	}</span>
+	
+	public static void machineStrategy(int playerColor)
+	//**********************************************************************
+	//** machineStrategy
+	//**	Determines the best place to move.
+	//**
+	//**					describe your code here.
+	//**
+	//**********************************************************************
+	{
+		
+		
+<span class="nc" id="L447">		System.out.println(&quot;Computer placed piece at location: &quot;);</span>
+<span class="nc" id="L448">	}</span>
+
+	//*******************************
+	//** Machine Logic Variables
+	//*******************************
+	
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
